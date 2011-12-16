@@ -4,11 +4,11 @@
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
-(defun clsym (symbol)
-  "Convert a symbol to a string. If already a string, just return it."
-  (if (stringp symbol)
-      symbol
-      (string-downcase (write-to-string symbol))))
+(defun clsym (obj)
+  "Convert a symbol to a string. If not a symbol, don't do anything."
+  (if (symbolp obj)
+      (string-downcase (write-to-string symbol))
+      obj))
 
 (defmacro hash (&rest pairs)
   "Create a hash from list pairs. Great for creating hashes on the fly without
