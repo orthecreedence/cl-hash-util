@@ -7,7 +7,7 @@
 (defun clsym (obj)
   "Convert a symbol to a string. If not a symbol, don't do anything."
   (if (symbolp obj)
-      (string-downcase (write-to-string symbol))
+      (string-downcase (write-to-string obj))
       obj))
 
 (defmacro hash (&rest pairs)
@@ -37,17 +37,10 @@
   which would return 4 (1st index of list stored under key 'lol of the hash
   table. Simplifies traversing responses from decoded JSON objects by about a
   trillion times."
-  (let ((path (reverse path)))
-    (labels ((trav-r (obj path)
-               (let ((el (car path))
-                     (next (cdr path)))
-                 (cond ((or (equal (list el) next) (eql next nil))
-                        (if (numberp el)
-                            `(elt ,obj ,el)
-                            `(gethash ,(clsym el) ,obj)))
-                       ((numberp el)
-                        `(elt ,(trav-r obj next) ,el))
-                       (t
-                        `(gethash ,(clsym el) ,(trav-r obj next)))))))
-      (trav-r obj path))))
+  (let ((gets obj))
+    (dolist (entry path)
+      (setf gets (if (numberp entry)
+                     `(elt ,gets ,entry)
+                     `(gethash ,(clsym entry) ,gets))))
+    gets))
 
