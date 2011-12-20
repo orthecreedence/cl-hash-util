@@ -63,7 +63,7 @@
   instance, if you did:
 
   (let ((myhash (hash (\"lol\" '(3 4 5)))))
-    (hash-get myhash (lol 1)))
+    (hash-get myhash (\"lol\" 1)))
 
   which would return 4 (1st index of list stored under key 'lol of the hash
   table. Simplifies traversing responses from decoded JSON objects by about a
