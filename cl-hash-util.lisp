@@ -1,14 +1,45 @@
+;;; cl-hash-util is a very basic library for dealing with CL's hash tables. The
+;;; idea was spawned through working with enough JSON APIs and config files,
+;;; causing a lot of headaches in the process. For instance, to get a value deep
+;;; within a hash, you have to do:
+;;;   (gethash "city" (gethash "location" (gethash "user" obj)))
+;;;
+;;; With cl-hash-util, you can write:
+;;;   (hash-get obj ("user" "location" "city"))
+;;;
+;;; hash-get can also deal with getting elements out of lists and arrays:
+;;;   (hash-get obj ("user" "friends" 0 "name"))
+;;;
+;;; which normally would have to be written as such:
+;;;   (gethash "name" (elt (gethash "friends" (gethash "user" obj)) 0))
+;;;
+;;; ...uuuugly.
+;;;
+;;; cl-hash-util also provides an easy way to build hash tables on the fly. 
+;;; Where you'd normally have to do something like:
+;;;   (let ((myhash (make-hash-table :test #'equal)))
+;;;     (setf (gethash "name" myhash) "andrew")
+;;;     (setf (gethash "location" myhash) "santa cruz")
+;;;     myhash)
+;;;
+;;; You can now do:
+;;;   (hash ("name" "andrew") ("location" "santa cruz"))
+;;;
+;;; You can also do nested hashes:
+;;;   (hash ("name" "andrew")
+;;;         ("location" (hasn ("city" "santa cruz")
+;;;                           ("state" "CA"))))
+;;; 
+;;; This saves a lot of typing =].
+;;;
+;;; The project is hosted on github: 
+;;;   https://github.com/orthecreedence/cl-hash-util
+
 (defpackage :cl-hash-util
   (:use :cl :cl-user)
   (:export hash hash-get)
   (:nicknames :hu))
 (in-package :cl-hash-util)
-
-(defun clsym (obj)
-  "Convert a symbol to a string. If not a symbol, don't do anything."
-  (if (symbolp obj)
-      (string-downcase (write-to-string obj))
-      obj))
 
 (defmacro hash (&rest pairs)
   "Create a hash from list pairs. Great for creating hashes on the fly without
@@ -41,6 +72,6 @@
     (dolist (entry path)
       (setf gets (if (numberp entry)
                      `(elt ,gets ,entry)
-                     `(gethash ,(clsym entry) ,gets))))
+                     `(gethash ,entry ,gets))))
     gets))
 
