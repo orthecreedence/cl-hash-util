@@ -27,7 +27,7 @@
 ;;;
 ;;; You can also do nested hashes:
 ;;;   (hash ("name" "andrew")
-;;;         ("location" (hasn ("city" "santa cruz")
+;;;         ("location" (hash ("city" "santa cruz")
 ;;;                           ("state" "CA"))))
 ;;; 
 ;;; This saves a lot of typing =].
