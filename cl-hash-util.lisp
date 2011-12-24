@@ -23,7 +23,7 @@
 ;;;     myhash)
 ;;;
 ;;; You can now do:
-;;;   (hash ("name" "andrew") ("location" "santa cruz"))
+;;;   (hash '(("name" "andrew") ("location" "santa cruz")))
 ;;;
 ;;; You can also do nested hashes:
 ;;;   (hash ("name" "andrew")
@@ -37,41 +37,59 @@
 
 (defpackage :cl-hash-util
   (:use :cl :cl-user)
-  (:export hash hash-get)
+  (:export hash-create
+           hash
+           hash-get)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
-(defmacro hash (&rest pairs)
-  "Create a hash from list pairs. Great for creating hashes on the fly without
-  having to do any horrible syntax. For instance:
-    (hash (\"name\" \"andrew\") (\"age\" 25))
+(defun hash-create (pairs &key (test #'equal))
+  "Create a hash table with limited syntax:
 
-  This macro can be used recursively as well:
-    (hash (\"name\" \"andrew\")
-          (\"bed time\" \"7pm\")
-          (\"location\" (hash (\"city\" \"santa cruz\") (\"state\" \"california\"))))
+    (hash `((\"name\" \"andrew\") (\"city\" \"santa cruz\")))
   
-  This saves a LOT of time typing out annoying syntax."
-  (let ((hash (gensym)))
-    `(let ((,hash (make-hash-table :test #'equal)))
-       (dolist (pair (list ,@(loop for p in pairs collect `(list ,(nth 0 p) ,(nth 1 p)))))
-         (setf (gethash (nth 0 pair) ,hash) (nth 1 pair)))
-       ,hash)))
+  which would otherwise be:
+  
+    (let ((hash (make-hash-table :test #'equal)))
+      (setf (gethash \"name\" hash) \"andrew\")
+      (setf (gethash \"city\" hash) \"santa cruz\")
+      hash)
+  
+  yuck city."
+  (let ((hash (make-hash-table :test test)))
+    (dolist (pair pairs)
+      (setf (gethash (car pair) hash) (cadr pair)))
+    hash))
 
-(defmacro hash-get (obj path)
+(defmacro hash (&rest pairs)
+  "Extends hash-create syntax to make it nicer."
+  `(hash-create (list ,@(loop for pair in pairs collect (list 'list (car pair) (cadr pair))))))
+
+(defun hash-get (obj path)
   "Allows you to specify a path to get values out of a hash/list object. For
   instance, if you did:
 
-  (let ((myhash (hash (\"lol\" '(3 4 5)))))
-    (hash-get myhash (\"lol\" 1)))
+    (let ((myhash (hash '(\"lol\" '(3 4 5)))))
+      (hash-get myhash '(\"lol\" 1)))
 
   which would return 4 (1st index of list stored under key 'lol of the hash
-  table. Simplifies traversing responses from decoded JSON objects by about a
+  table). Simplifies traversing responses from decoded JSON objects by about a
   trillion times."
-  (let ((gets obj))
+  (let ((placeholder obj))
     (dolist (entry path)
-      (setf gets (if (numberp entry)
-                     `(elt ,gets ,entry)
-                     `(gethash ,entry ,gets))))
-    gets))
+      (setf placeholder (if (numberp entry)
+                            (elt placeholder entry)
+                            (gethash entry placeholder))))
+    placeholder))
+
+(defun (setf hash-get) (val obj path)
+  "Defines a setf for the hash-get function. Uses hash-get to get all but the
+  last item in the path, then setfs that last object (either a gethash or an
+  elt)."
+  (let ((last-obj (hash-get obj (butlast path)))
+        (final (car (last path))))
+    (if (numberp final)
+        (setf (elt last-obj final) val)
+        (setf (gethash final last-obj) val))
+    val))
 
