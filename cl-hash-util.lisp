@@ -5,10 +5,10 @@
 ;;;   (gethash "city" (gethash "location" (gethash "user" obj)))
 ;;;
 ;;; With cl-hash-util, you can write:
-;;;   (hash-get obj ("user" "location" "city"))
+;;;   (hash-get obj '("user" "location" "city"))
 ;;;
 ;;; hash-get can also deal with getting elements out of lists and arrays:
-;;;   (hash-get obj ("user" "friends" 0 "name"))
+;;;   (hash-get obj '("user" "friends" 0 "name"))
 ;;;
 ;;; which normally would have to be written as such:
 ;;;   (gethash "name" (elt (gethash "friends" (gethash "user" obj)) 0))
@@ -23,7 +23,11 @@
 ;;;     myhash)
 ;;;
 ;;; You can now do:
-;;;   (hash '(("name" "andrew") ("location" "santa cruz")))
+;;;   (hash-create '(("name" "andrew") ("location" "santa cruz")))
+;;;
+;;;   -OR-
+;;;
+;;;   (hash ("name" "andrew") ("location" "santa cruz"))
 ;;;
 ;;; You can also do nested hashes:
 ;;;   (hash ("name" "andrew")
