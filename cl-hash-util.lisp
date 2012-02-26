@@ -43,7 +43,8 @@
   (:use :cl :cl-user)
   (:export hash-create
            hash
-           hash-get)
+           hash-get
+           hash-copy)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -96,4 +97,12 @@
         (setf (elt last-obj final) val)
         (setf (gethash final last-obj) val))
     val))
+
+(defun hash-copy (hash &key (test #'equal))
+  "Performs a shallow (non-recursive) copy of a hash table."
+  (let ((new-hash (make-hash-table :test test :size (hash-table-count hash))))
+    (loop for k being the hash-keys of hash
+          for v being the hash-values of hash do
+          (setf (hash-get new-hash (list k)) (hash-get hash (list k))))
+    new-hash))
 
