@@ -1,5 +1,6 @@
-(asdf:defsystem :cl-hash-util
-  :author "Andrew Lyon <orthecreedence@gmail.com>"
-  :licence "MIT"
-  :version "0.1.0"
-  :components ((:file "cl-hash-util")))
+(asdf:defsystem cl-hash-util
+  :author "Andrew Danger Lyon <orthecreedence@gmail.com>"
+  :license "MIT"
+  :version "0.1.4"
+  :description "A simple and natural wrapper around Common Lisp's hash functionality."
+  :components ((:file "hash-util")))
