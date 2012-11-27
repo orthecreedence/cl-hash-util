@@ -38,7 +38,7 @@ Where you'd normally have to do something like:
 (let ((myhash (make-hash-table :test #'equal)))
   (setf (gethash "name" myhash) "andrew")
   (setf (gethash "location" myhash) "santa cruz")
-    myhash)
+  myhash)
 ```
 
 You can now do:
