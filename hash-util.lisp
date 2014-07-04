@@ -81,7 +81,7 @@
    table). Simplifies traversing responses from decoded JSON objects by about a
    trillion times."
   (let ((placeholder obj))
-    (dolist (entry path)
+    (dolist (entry (if (listp path) path (list path)))
       (setf placeholder (if (numberp entry)
                             (elt placeholder entry)
                             (gethash entry placeholder))))
@@ -91,18 +91,19 @@
   "Defines a setf for the hget function. Uses hget to get all but the
    last item in the path, then setfs that last object (either a gethash or an
    elt)."
-  (let ((last-obj (hget obj (butlast path)))
-        (final (car (last path))))
-    (if (numberp final)
-        (setf (elt last-obj final) val)
-        (setf (gethash final last-obj) val))
-    val))
+  (let ((path (if (listp path) path (list path))))
+    (let ((last-obj (hget obj (butlast path)))
+          (final (car (last path))))
+      (if (numberp final)
+          (setf (elt last-obj final) val)
+          (setf (gethash final last-obj) val))
+      val)))
 
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."
   (let ((new-hash (make-hash-table :test test :size (hash-table-count hash))))
     (loop for k being the hash-keys of hash
           for v being the hash-values of hash do
-          (setf (hget new-hash (list k)) (hget hash (list k))))
+          (setf (gethash k new-hash) v))
     new-hash))
 
