@@ -41,10 +41,11 @@
 
 (defpackage :cl-hash-util
   (:use :cl :cl-user)
-  (:export hash-create
-           hash
-           hget
-           hash-copy)
+  (:export :hash-create
+           :hash
+           :hget
+           :hash-copy
+           :hash-keys)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -106,4 +107,8 @@
           for v being the hash-values of hash do
           (setf (gethash k new-hash) v))
     new-hash))
+
+(defun hash-keys (hash)
+  "Grab all the hash keys of the passed hash into a list."
+  (loop for x being the hash-keys of hash collect x))
 
