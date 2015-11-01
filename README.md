@@ -61,9 +61,9 @@ You can also do nested hashes:
 This saves a lot of typing =].
 
 With-keys
----------(
+---------
 
-With-keys is the hash-table equivalent of with-slots.
+With-keys is the hash table equivalent of with-slots.
 
 ```common-lisp
 (with-keys
@@ -85,7 +85,7 @@ If you don't want with-keys to guess at a symbol for a key, supply a list -
 Collecting-hash-table
 ---------------------
 
-A collection macro that builds and outputs a hash-table. To add to the hash
+A collection macro that builds and outputs a hash table. To add to the hash
 table, call the collect function with a key and a value from within the scope
 of the collecting-hash-table macro. The value will be inserted or combined with
 existing values according to the specified mode.
@@ -105,13 +105,12 @@ Result: <hash table: 5 => ("three" "seven" "eight")
 The mode can be set in the parameters section of collecting-hash-table with the
 :mode keyword. The :mode keyword can also be passed to individual collect calls.
 
-
 Keyword parameters:
 
 :test - Test function parameter passed to make-hash-table when creating a new
-hash-table
+hash table
 
-:existing - Pass an existing hash-table to the macro for modification. Using
+:existing - Pass an existing hash table to the macro for modification. Using
 this option at the same time as :test will result in an error.
 
 :mode - Set the default mode for the collect function.
