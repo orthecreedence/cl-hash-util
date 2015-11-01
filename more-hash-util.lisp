@@ -17,9 +17,9 @@
        (symbol-macrolet
            ,(mapcar
              (lambda (entry)
-               (let ((sym (symbolize (if (listp entry)
-                                         (car entry)
-                                         entry)))
+               (let ((sym (if (listp entry)
+                              (car entry)
+                              (symbolize entry)))
                      (key (if (listp entry)
                               (second entry)
                               entry)))
