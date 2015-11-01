@@ -47,7 +47,9 @@
            :hash-copy
            :hash-keys
            :with-keys
-           :collecting-hash-table)
+           :collecting-hash-table
+           :it
+           :collect)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 

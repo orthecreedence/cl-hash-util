@@ -135,6 +135,17 @@ If the key doesn't yet exist, places the value in a new list.
 Obviously, not all modes are compatible with each other. Collecting-hash-table
 makes no attempt to save you from intermingling them.
 
+Custom modes may be created by supplying a function instead of a mode
+descriptor. This function will be applied in a reduce-like fashion: when a value
+already exists under a key, the existing value and the new value will be passed
+to the supplied function. Its return value will be stored under the key.
+
+If more flexibility is needed, then a list of two functions can be supplied. The
+first function should accept two parameters: first, the existing value; second
+the new value. It will be called when a key already exists. The second function
+should take one parameter. It is called when a key does not exist yet. In both
+cases the key value is set to the function return value.
+
 
 
 

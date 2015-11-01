@@ -31,26 +31,35 @@
          ,@body))))
 
 (defun %hash-collecting-modes (mode)
-  (case mode
-    (:replace (list
-               (lambda (e n) (declare (ignore e)) n)
+  (typecase mode
+    (keyword
+     (case mode
+       (:replace (list
+                  (lambda (e n) (declare (ignore e)) n)
+                  (lambda (v) v)))
+        (:keep (list
+                (lambda (e n) (declare (ignore n)) e)
+                (lambda (v) v)))
+        (:tally (list
+                 (lambda (e n) (declare (ignore n)) (1+ e))
+                 (lambda (v) (declare (ignore v)) 1)))
+        (:sum (list
+               (lambda (e n) (+ e n))
                (lambda (v) v)))
-    (:keep (list
-            (lambda (e n) (declare (ignore n)) e)
-            (lambda (v) v)))
-    (:tally (list
-             (lambda (e n) (declare (ignore n)) (1+ e))
-             (lambda (v) (declare (ignore v)) 1)))
-    (:sum (list
-           (lambda (e n) (+ e n))
-           (lambda (v) v)))
-    (:append (list
-              (lambda (e n) (nconc e (list n)))
-              (lambda (v) (list v))))
-    (:push (list
-            (lambda (e n) (cons n e))
-            (lambda (v) (list v))))
-    (otherwise (error "Mode not found"))))
+        (:append (list
+                  (lambda (e n) (nconc e (list n)))
+                  (lambda (v) (list v))))
+        (:push (list
+                (lambda (e n) (cons n e))
+                (lambda (v) (list v))))
+        (otherwise (error "Mode not found"))))
+    (function
+     (list
+      (lambda (e n) (funcall mode e n))
+      (lambda (v) v)))
+    (list
+     (unless (and (functionp (car mode)) (functionp (second mode)))
+       (error "Invalid hash mode: needs two functions.")))))
 
 (defmacro collecting-hash-table ((&key (test '(function eql) test-set-p)
                                     existing (mode :append)) &body body)
@@ -58,8 +67,10 @@
        (error "Can't set test when reusing an existing hash table"))
   (let ((fill (gensym))
         (init (gensym))
-        (stor (gensym)))
-    `(let ((,stor (aif ,existing it (make-hash-table :test ,test))))
+        (stor (gensym))
+        (xist (gensym)))
+    `(let* ((,xist ,existing)
+            (,stor (if ,xist ,xist (make-hash-table :test ,test))))
        (destructuring-bind (,fill ,init) (%hash-collecting-modes ,mode)
          (labels
              ((collect (key value &key mode)
