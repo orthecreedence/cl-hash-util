@@ -82,3 +82,37 @@
                         (setf (gethash key ,stor) (funcall init value)))))))
            ,@body
            ,stor)))))
+
+(defun alist->plist (alist)
+  "Converts an alist to plist."
+  (let ((keyword-package (find-package :keyword)))
+    (loop for i in alist
+          collect (if (symbolp (car i))
+                      (intern (symbol-name (car i)) keyword-package)
+                      (intern (string-upcase (car i)) keyword-package))
+          collect (cdr i))))
+
+(defun plist->alist (plist)
+  (loop for (k v) on plist by #'cddr
+        collect (cons (intern (symbol-name k)) v)))
+
+(defun alist->hash (al &key (mode :replace) existing)
+  (collecting-hash-table (:mode mode :existing existing)
+    (dolist (x (reverse al))
+      (collect (car x) (cdr x)))))
+
+(defun hash->alist (hsh)
+  (cl-utilities:collecting
+    (maphash
+     (lambda (k v)
+       (cl-utilities:collect (cons k v)))
+     hsh)))
+
+(defun hash->plist (hsh)
+  (cl-utilities:collecting
+    (maphash
+     (lambda (k v)
+       (cl-utilities:collect k)
+       (cl-utilities:collect v))
+     hsh)))
+
