@@ -144,7 +144,7 @@ fashion to the existing and new values of a key."
 (defun plist->alist (plist)
   "Converts a plist to an alist"
   (loop for (k v) on plist by #'cddr
-        collect (cons (intern (symbol-name k)) v)))
+        collect (cons k v)))
 
 (defun alist->hash (al &key (mode :replace) existing)
   "Converts an alist to a hash table.
