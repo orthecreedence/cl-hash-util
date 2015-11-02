@@ -88,7 +88,7 @@ Collecting-hash-table
 A collection macro that builds and outputs a hash table. To add to the hash
 table, call the collect function with a key and a value from within the scope
 of the collecting-hash-table macro. The value will be inserted or combined with
-existing values according to the specified mode.
+existing values according to the specified accumulation mode.
 
 This code collects words into bins based on their length:
 
@@ -145,6 +145,16 @@ first function should accept two parameters: first, the existing value; second
 the new value. It will be called when a key already exists. The second function
 should take one parameter. It is called when a key does not exist yet. In both
 cases the key value is set to the function return value.
+
+Conversion functions
+--------------------
+
+Included is a suite of functions for converting between hash tables, alists and
+plists: alist->plist, plist->alist, alist->hash, plist->hash, hash->alist, and hash->plist.
+
+The alist->hash and plist->hash take the same :existing and :mode keywords that
+collecting-hash-table takes.
+
 
 
 
