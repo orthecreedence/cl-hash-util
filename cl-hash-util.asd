@@ -4,4 +4,4 @@
   :version "0.1.6"
   :description "A simple and natural wrapper around Common Lisp's hash functionality."
   :components ((:file "hash-util")
-               (:file "more-hash-util"))
+               (:file "more-hash-util")))
