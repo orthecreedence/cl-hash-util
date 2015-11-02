@@ -15,7 +15,7 @@
 ;;;
 ;;; ...uuuugly.
 ;;;
-;;; cl-hash-util also provides an easy way to build hash tables on the fly. 
+;;; cl-hash-util also provides an easy way to build hash tables on the fly.
 ;;; Where you'd normally have to do something like:
 ;;;   (let ((myhash (make-hash-table :test #'equal)))
 ;;;     (setf (gethash "name" myhash) "andrew")
@@ -33,10 +33,10 @@
 ;;;   (hash ("name" "andrew")
 ;;;         ("location" (hash ("city" "santa cruz")
 ;;;                           ("state" "CA"))))
-;;; 
+;;;
 ;;; This saves a lot of typing =].
 ;;;
-;;; The project is hosted on github: 
+;;; The project is hosted on github:
 ;;;   https://github.com/orthecreedence/cl-hash-util
 
 (defpackage :cl-hash-util
@@ -45,7 +45,17 @@
            :hash
            :hget
            :hash-copy
-           :hash-keys)
+           :hash-keys
+           :with-keys
+           :collecting-hash-table
+           :it
+           :collect
+           :alist->plist
+           :plist->alist
+           :alist->hash
+           :plist->hash
+           :hash->alist
+           :hash->plist)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -105,10 +115,9 @@
   (let ((new-hash (make-hash-table :test test :size (hash-table-count hash))))
     (loop for k being the hash-keys of hash
           for v being the hash-values of hash do
-          (setf (gethash k new-hash) v))
+            (setf (gethash k new-hash) v))
     new-hash))
 
 (defun hash-keys (hash)
   "Grab all the hash keys of the passed hash into a list."
   (loop for x being the hash-keys of hash collect x))
-
