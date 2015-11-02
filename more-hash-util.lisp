@@ -83,36 +83,72 @@
            ,@body
            ,stor)))))
 
+;;;FIXME: Consider adding :mode thing to alist->plist, plist->alist. Would make
+;;;them slower and more complicated...
+
 (defun alist->plist (alist)
-  "Converts an alist to plist."
-  (let ((keyword-package (find-package :keyword)))
-    (loop for i in alist
-          collect (if (symbolp (car i))
-                      (intern (symbol-name (car i)) keyword-package)
-                      (intern (string-upcase (car i)) keyword-package))
-          collect (cdr i))))
+  "Converts an alist to a plist"
+  (let ((stor nil))
+    (dolist (itm alist)
+      (push (car itm) stor)
+      (push (cdr itm) stor))
+    (nreverse stor)))
 
 (defun plist->alist (plist)
+  "Converts a plist to an alist"
   (loop for (k v) on plist by #'cddr
         collect (cons (intern (symbol-name k)) v)))
 
 (defun alist->hash (al &key (mode :replace) existing)
+  "Converts an alist to a hash table.
+
+The :existing keyword can be used to supply a hash table to which the contents
+of the alist will be added. Otherwise, a new hash table is created.
+
+Since alists can contain multiple entries for a given key, alist->hash has a
+variety of accumulation modes to handle them. The accumulation mode can be
+set with the :mode keyword. Available modes are :replace :keep :tally :sum
+:append and :push. :replace is the default.
+
+If a function is supplied instead of a recognized mode, then values will be
+accumulated to each key as by a reduce of the function."
   (collecting-hash-table (:mode mode :existing existing)
     (dolist (x (reverse al))
       (collect (car x) (cdr x)))))
 
+(defun plist->hash (plist &key (mode :replace) existing)
+  "Converts a plist to a hash table.
+
+The :existing keyword can be used to supply a hash table to which the contents
+of the plist will be added. Otherwise, a new hash table is created.
+
+Since plists can contain multiple entries for a given key, plist->hash has a
+variety of accumulation modes to handle them. The accumulation mode can be
+set with the :mode keyword. Available modes are :replace :keep :tally :sum
+:append and :push. :replace is the default.
+
+If a function is supplied instead of a recognized mode, then values will be
+accumulated to each key as by a reduce of the function."
+  (collecting-hash-table (:mode mode :existing existing)
+    (loop for (k v) on plist by #'cddr
+          do (collect k v))))
+
 (defun hash->alist (hsh)
-  (cl-utilities:collecting
+  "Converts a hash table to an alist"
+  (let ((stor nil))
     (maphash
      (lambda (k v)
-       (cl-utilities:collect (cons k v)))
-     hsh)))
+       (push (cons k v) stor))
+     hsh)
+    (nreverse stor)))
 
 (defun hash->plist (hsh)
-  (cl-utilities:collecting
+  "Converts a hash table to a plist"
+  (let ((stor nil))
     (maphash
      (lambda (k v)
-       (cl-utilities:collect k)
-       (cl-utilities:collect v))
-     hsh)))
+       (push k stor)
+       (push v stor))
+     hsh)
+    (nreverse stor)))
 

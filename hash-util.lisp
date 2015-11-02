@@ -49,7 +49,13 @@
            :with-keys
            :collecting-hash-table
            :it
-           :collect)
+           :collect
+           :alist->plist
+           :plist->alist
+           :alist->hash
+           :plist->hash
+           :hash->alist
+           :hash->plist)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
