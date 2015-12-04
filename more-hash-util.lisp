@@ -53,22 +53,22 @@ If you don't want with-keys to guess at a symbol for a key, supply a list -
        (:replace (list
                   (lambda (e n) (declare (ignore e)) n)
                   (lambda (v) v)))
-        (:keep (list
-                (lambda (e n) (declare (ignore n)) e)
-                (lambda (v) v)))
-        (:tally (list
-                 (lambda (e n) (declare (ignore n)) (1+ e))
-                 (lambda (v) (declare (ignore v)) 1)))
-        (:sum (list
-               (lambda (e n) (+ e n))
+       (:keep (list
+               (lambda (e n) (declare (ignore n)) e)
                (lambda (v) v)))
-        (:append (list
-                  (lambda (e n) (nconc e (list n)))
-                  (lambda (v) (list v))))
-        (:push (list
-                (lambda (e n) (cons n e))
-                (lambda (v) (list v))))
-        (otherwise (error "Mode not found"))))
+       (:tally (list
+                (lambda (e n) (declare (ignore n)) (1+ e))
+                (lambda (v) (declare (ignore v)) 1)))
+       (:sum (list
+              (lambda (e n) (+ e n))
+              (lambda (v) v)))
+       (:append (list
+                 (lambda (e n) (nconc e (list n)))
+                 (lambda (v) (list v))))
+       (:push (list
+               (lambda (e n) (cons n e))
+               (lambda (v) (list v))))
+       (otherwise (error "Mode not found"))))
     (function
      (list
       (lambda (e n) (funcall mode e n))
@@ -79,7 +79,7 @@ If you don't want with-keys to guess at a symbol for a key, supply a list -
 
 (defmacro collecting-hash-table ((&key (test '(function eql) test-set-p)
                                     existing (mode :append)) &body body)
-   "A collection macro that builds and outputs a hash table. To add to the hash
+  "A collection macro that builds and outputs a hash table. To add to the hash
 table, call the collect function with a key and a value from within the scope
 of the collecting-hash-table macro. The value will be inserted or combined with
 existing values according to the specified mode.
@@ -91,25 +91,25 @@ This code collects words into bins based on their length:
   (dotimes (i 10)
     (let ((word (format nil \"~r\" i)))
       (collect (length word) word)))
-```
-Result: <hash table: 5 => (\"three\" \"seven\" \"eight\")
-                     3 => (\"one\" \"two\" \"six\")
-                     4 => (\"zero\" \"four\" \"five\" \"nine\")>
+  ```
+  Result: <hash table: 5 => (\"three\" \"seven\" \"eight\")
+                       3 => (\"one\" \"two\" \"six\")
+                       4 => (\"zero\" \"four\" \"five\" \"nine\")>
 
-The mode can be set in the parameters section of collecting-hash-table with the
-:mode keyword. The :mode keyword can also be passed to individual collect calls.
+  The mode can be set in the parameters section of collecting-hash-table with the
+  :mode keyword. The :mode keyword can also be passed to individual collect calls.
 
-Keyword parameters:
+  Keyword parameters:
 
-:test - Test function parameter passed to make-hash-table when creating a new
-hash table
+  :test - Test function parameter passed to make-hash-table when creating a new
+  hash table
 
-:existing - Pass an existing hash table to the macro for modification. Using
-this option at the same time as :test will result in an error.
+  :existing - Pass an existing hash table to the macro for modification. Using
+  this option at the same time as :test will result in an error.
 
-:mode - Set the default mode for the collect function. Modes are :replace :keep
-:tally :sum :append :push or a function that will be applied in a reduce-like
-fashion to the existing and new values of a key."
+  :mode - Set the default mode for the collect function. Modes are :replace :keep
+  :tally :sum :append :push or a function that will be applied in a reduce-like
+  fashion to the existing and new values of a key."
   (and test-set-p existing
        (error "Can't set test when reusing an existing hash table"))
   (let ((fill (gensym))
@@ -198,4 +198,3 @@ accumulated to each key as by a reduce of the function."
        (push v stor))
      hsh)
     (nreverse stor)))
-
