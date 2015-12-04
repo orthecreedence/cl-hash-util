@@ -66,9 +66,10 @@ With-keys
 With-keys is the hash table equivalent of with-slots.
 
 ```common-lisp
+(defvar ht (hash ("name" "andrew") ("location" "santa cruz")))
 (with-keys
    ("name" (loc "location"))
-    (hash ("name" "andrew") ("location" "santa cruz"))
+    ht
     (setf loc (string-upcase loc))
   (format nil "Hi, ~a in ~a!" name loc))
 "Hi, andrew in SANTA CRUZ!"
