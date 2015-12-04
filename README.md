@@ -134,6 +134,9 @@ If the key doesn't yet exist, places the value in a new list.
 
 :push - Like append, but sticks things on the other end.
 
+:concatenate - Assumes that both new and existing values are lists, storing the
+concatenation of them under the key.
+
 Obviously, not all modes are compatible with each other. Collecting-hash-table
 makes no attempt to save you from intermingling them.
 

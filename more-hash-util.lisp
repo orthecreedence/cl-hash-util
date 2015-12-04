@@ -68,6 +68,9 @@ If you don't want with-keys to guess at a symbol for a key, supply a list -
        (:push (list
                (lambda (e n) (cons n e))
                (lambda (v) (list v))))
+       (:concatenate (list
+                      (lambda (e n) (concatenate 'list e n))
+                      (lambda (v) v)))
        (otherwise (error "Mode not found"))))
     (function
      (list
@@ -108,8 +111,8 @@ This code collects words into bins based on their length:
   this option at the same time as :test will result in an error.
 
   :mode - Set the default mode for the collect function. Modes are :replace :keep
-  :tally :sum :append :push or a function that will be applied in a reduce-like
-  fashion to the existing and new values of a key."
+  :tally :sum :append :push :concatenate or a function that will be applied in a
+  reduce-like fashion to the existing and new values of a key."
   (and test-set-p existing
        (error "Can't set test when reusing an existing hash table"))
   (let ((fill (gensym))
