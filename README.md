@@ -66,20 +66,22 @@ With-keys
 With-keys is the hash table equivalent of with-slots.
 
 ```common-lisp
+(defvar ht (hash ("name" "andrew") ("location" "santa cruz")))
 (with-keys
    ("name" (loc "location"))
-    (hash ("name" "andrew") ("location" "santa cruz"))
+    ht
     (setf loc (string-upcase loc))
   (format nil "Hi, ~a in ~a!" name loc))
 "Hi, andrew in SANTA CRUZ!"
 ```
 
-The first parameter is a list of keys that with-keys will reference in the hash
-table provided in the second parameter. With-keys will attempt to convert each
-key into a symbol, binding the hash table value to it during body execution.
+The first parameter is a list of keys. With-keys will reference the keys in the hash
+table provided as the second parameter. With-keys will attempt to convert each
+key into a symbol in the current package, binding the hash table value to it
+during body execution.
 String keys are upcased before conversion to symbols.
 
-If you don't want with-keys to guess at a symbol for a key, supply a list -
+If you don't want with-keys to guess at a symbol, supply a list -
  (*symbol key*) - in place of the key, as in (loc "location") above.
 
 Collecting-hash-table
@@ -98,9 +100,10 @@ This code collects words into bins based on their length:
     (let ((word (format nil "~r" i)))
       (collect (length word) word)))
 ```
-Result: <hash table: 5 => ("three" "seven" "eight")
-                     3 => ("one" "two" "six")
-                     4 => ("zero" "four" "five" "nine")>
+
+Result: &lt;hash table: 5 =&gt; ("three" "seven" "eight")
+                     3 =&gt; ("one" "two" "six")
+                     4 =&gt; ("zero" "four" "five" "nine")&gt;
 
 The mode can be set in the parameters section of collecting-hash-table with the
 :mode keyword. The :mode keyword can also be passed to individual collect calls.
@@ -131,6 +134,9 @@ existing value with the new one.
 If the key doesn't yet exist, places the value in a new list.
 
 :push - Like append, but sticks things on the other end.
+
+:concatenate - Assumes that both new and existing values are lists, storing the
+concatenation of them under the key.
 
 Obviously, not all modes are compatible with each other. Collecting-hash-table
 makes no attempt to save you from intermingling them.
