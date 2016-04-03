@@ -110,6 +110,63 @@
           (setf (gethash final last-obj) val))
       val)))
 
+(defun %hget-core (obj path)
+  (let ((placeholder obj))
+    (loop for entries on (if (listp path) path (list path))
+       do
+         (if (and entries placeholder
+                  (not (or (hash-table-p placeholder)
+                           (listp placeholder)
+                           (vectorp placeholder))))
+             (error "Can't descend into tree. Value is not null, but is not a hash table or sequence.")
+             (let ((current (if (numberp (car entries))
+                             (elt placeholder (car entries))
+                             (gethash (car entries) placeholder))))
+               (if current
+                   (setf placeholder current)
+                   (return-from %hget-core (values placeholder entries))))))
+    placeholder))
+
+(defun hget/extend (obj path)
+  "Like hget, but does not raise an error if the lower part of the tree is
+   missing. Instead, it returns nil as the first value and the unmatched
+   portion of the path as the second value.
+
+       (defvar *hash* (hash (list :a (hash '(:b (hash))))))
+       (hget/extend *hash* '(:a :b :c :d :e))
+
+   will return the values NIL and (:C :D :E).
+   On its own, hget/extend doesn't extend anything, used with setf, it will
+   pad out a missing tree with new hash tables, placing the value in the
+   bottom-most hash table."
+  (let ((placeholder obj))
+    (loop for entries on (if (listp path) path (list path))
+       do
+         (if (null placeholder)
+             (return-from hget/extend (values nil entries))
+             (setf placeholder (if (numberp (car entries))
+                                   (elt placeholder (car entries))
+                                   (gethash (car entries) placeholder)))))
+    placeholder))
+
+(defun (setf hget/extend) (val obj path
+                           &optional (new-hash-func #'make-hash-table))
+  "Setf for hget/extend. Obj is assumed to contain a tree of hash tables and
+   sequences that contains the branches in path. If any nodes are absent, they
+   will be padded out before setting the value in the bottom-most node. By
+   default the padding consists of calls to make-hash-table with no arguments.
+   To customize the new hash tables, supply a function that returns a custom
+   hash table in the optional new-hash-func parameter.
+
+   Hget/extend does not support the addition of sequences or arrays to the tree.
+   They must be added manually. Numerical indices in the extension portion of
+   the path will result in an error."
+  (let ((path (if (listp path) path (list path))))
+    (multiple-value-bind (value leftover) (hget/extend obj path)
+      (if leftover
+          )
+
+
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."
   (let ((new-hash (make-hash-table :test test :size (hash-table-count hash))))
