@@ -56,7 +56,9 @@
            :plist->hash
            :hash->alist
            :hash->plist
-           :hget/extend)
+           :hget/extend
+           :hash-get
+           :hash-get/extend)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -133,7 +135,7 @@
    missing. Instead, it returns nil as the first value and the unmatched
    portion of the path as the second value.
 
-       (defvar *hash* (hash (list :a (hash '(:b (hash))))))
+       (defvar *hash* (hash-create `((:a ,(hash-create `((:b ,(hash))))))))
        (hget/extend *hash* '(:a :b :c :d :e))
 
    will return the values NIL and (:C :D :E).
