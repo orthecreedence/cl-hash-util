@@ -137,6 +137,7 @@
        (hget/extend *hash* '(:a :b :c :d :e))
 
    will return the values NIL and (:C :D :E).
+
    On its own, hget/extend doesn't extend anything, used with setf, it will
    pad out a missing tree with new hash tables, placing the value in the
    bottom-most hash table."
@@ -151,8 +152,8 @@
    sequences that contains the branches in path. If any nodes are absent, they
    will be padded out before setting the value in the bottom-most node. By
    default the padding consists of calls to make-hash-table with no arguments.
-   To customize the new hash tables, supply a function that returns a custom
-   hash table in the optional new-hash-func parameter.
+   An alternate hash table constructor function can be supplied with the
+   new-hash-func argument.
 
    Hget/extend does not support the addition of sequences or arrays to the tree.
    They must be added manually. Numerical indices in the extension portion of
@@ -169,6 +170,8 @@
             (setf (gethash (car (last leftover)) current) val))
           (setf (hget obj path) val)))))
 
+(setf (fdefinition 'hash-get) #'hget)
+(setf (fdefinition 'hash-get/extend) #'hget/extend)
 
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."
