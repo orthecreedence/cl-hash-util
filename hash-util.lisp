@@ -144,7 +144,7 @@
    pad out a missing tree with new hash tables, placing the value in the
    bottom-most hash table."
   (multiple-value-bind (value leftover) (%hget-core obj path)
-    (if leftovers
+    (if leftover
         (values nil leftover)
         value)))
 
@@ -160,6 +160,8 @@
    Hget/extend does not support the addition of sequences or arrays to the tree.
    They must be added manually. Numerical indices in the extension portion of
    the path will result in an error."
+  (unless (functionp new-hash-func)
+    (error "New-hash-func argument is a non-function"))
   (let ((path (if (listp path) path (list path))))
     (multiple-value-bind (value leftover) (%hget-core obj path)
       (if leftover
