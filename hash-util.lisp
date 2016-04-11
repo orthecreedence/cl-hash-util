@@ -55,7 +55,10 @@
            :alist->hash
            :plist->hash
            :hash->alist
-           :hash->plist)
+           :hash->plist
+           :hget/extend
+           :hash-get
+           :hash-get/extend)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -81,6 +84,23 @@
   "Extends hash-create syntax to make it nicer."
   `(hash-create (list ,@(loop for pair in pairs collect (list 'list (car pair) (cadr pair))))))
 
+(defun %hget-core (obj path)
+  (let ((placeholder obj))
+    (loop for entries on (if (listp path) path (list path))
+       do
+         (if (and entries placeholder
+                  (not (or (hash-table-p placeholder)
+                           (listp placeholder)
+                           (vectorp placeholder))))
+             (error "Can't descend into tree. Value is not null, but is not a hash table or sequence.")
+             (let ((current (if (numberp (car entries))
+                                (elt placeholder (car entries))
+                                (gethash (car entries) placeholder))))
+               (if current
+                   (setf placeholder current)
+                   (return-from %hget-core (values placeholder entries))))))
+    placeholder))
+
 (defun hget (obj path)
   "Allows you to specify a path to get values out of a hash/list object. For
    instance, if you did:
@@ -91,12 +111,12 @@
    which would return 4 (1st index of list stored under key 'lol of the hash
    table). Simplifies traversing responses from decoded JSON objects by about a
    trillion times."
-  (let ((placeholder obj))
-    (dolist (entry (if (listp path) path (list path)))
-      (setf placeholder (if (numberp entry)
-                            (elt placeholder entry)
-                            (gethash entry placeholder))))
-    placeholder))
+  (multiple-value-bind (value leftover) (%hget-core obj path)
+    (if leftover
+        (if (numberp (car leftover))
+            (error "NIL found instead of sequence")
+            (error "NIL found instead of hash table"))
+        value)))
 
 (defun (setf hget) (val obj path)
   "Defines a setf for the hget function. Uses hget to get all but the
@@ -109,6 +129,53 @@
           (setf (elt last-obj final) val)
           (setf (gethash final last-obj) val))
       val)))
+
+(defun hget/extend (obj path)
+  "Like hget, but does not raise an error if the lower part of the tree is
+   missing. Instead, it returns nil as the first value and the unmatched
+   portion of the path as the second value.
+
+       (defvar *hash* (hash-create `((:a ,(hash-create `((:b ,(hash))))))))
+       (hget/extend *hash* '(:a :b :c :d :e))
+
+   will return the values NIL and (:C :D :E).
+
+   On its own, hget/extend doesn't extend anything, used with setf, it will
+   pad out a missing tree with new hash tables, placing the value in the
+   bottom-most hash table."
+  (multiple-value-bind (value leftover) (%hget-core obj path)
+    (if leftover
+        (values nil leftover)
+        value)))
+
+(defun (setf hget/extend) (val obj path
+                           &optional (new-hash-func #'make-hash-table))
+  "Setf for hget/extend. Obj is assumed to contain a tree of hash tables and
+   sequences that contains the branches in path. If any nodes are absent, they
+   will be padded out before setting the value in the bottom-most node. By
+   default the padding consists of calls to make-hash-table with no arguments.
+   An alternate hash table constructor function can be supplied with the
+   new-hash-func argument.
+
+   Hget/extend does not support the addition of sequences or arrays to the tree.
+   They must be added manually. Numerical indices in the extension portion of
+   the path will result in an error."
+  (unless (functionp new-hash-func)
+    (error "New-hash-func argument is a non-function"))
+  (let ((path (if (listp path) path (list path))))
+    (multiple-value-bind (value leftover) (%hget-core obj path)
+      (if leftover
+          (let ((current value))
+            (when (some #'numberp leftover)
+              (error "Number in hget/extend path list, but hget/extend won't create sequences"))
+            (dolist (key (butlast leftover))
+              (setf (gethash key current) (funcall new-hash-func))
+              (setf current (gethash key current)))
+            (setf (gethash (car (last leftover)) current) val))
+          (setf (hget obj path) val)))))
+
+(setf (fdefinition 'hash-get) #'hget)
+(setf (fdefinition 'hash-get/extend) #'hget/extend)
 
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."
