@@ -41,7 +41,8 @@
 
 (defpackage :cl-hash-util
   (:use :cl :cl-user)
-  (:export :hash-create
+  (:export :*error-on-nil*
+           :hash-create
            :hash
            :hget
            :hash-copy
@@ -61,6 +62,9 @@
            :hash-get/extend)
   (:nicknames :hu))
 (in-package :cl-hash-util)
+
+(defvar *error-on-nil* nil
+  "If hget encounters a nil, error out.")
 
 (defun hash-create (pairs &key (test #'equal))
   "Create a hash table with limited syntax:
@@ -112,11 +116,12 @@
    table). Simplifies traversing responses from decoded JSON objects by about a
    trillion times."
   (multiple-value-bind (value leftover) (%hget-core obj path)
-    (format t "leftover: ~a~%" leftover)
-    (if (< (length leftover) 1)
-        (if (numberp (car leftover))
-            (error "NIL found instead of sequence")
-            (error "NIL found instead of hash table"))
+    (if *error-on-nil*
+        (if (< (length leftover) 1)
+            (if (numberp (car leftover))
+                (error "NIL found instead of sequence")
+                (error "NIL found instead of hash table"))
+            value)
         value)))
 
 (defun (setf hget) (val obj path)
