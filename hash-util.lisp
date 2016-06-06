@@ -98,7 +98,7 @@
                                 (gethash (car entries) placeholder))))
                (if current
                    (setf placeholder current)
-                   (return-from %hget-core (values placeholder entries))))))
+                   (return-from %hget-core (values current entries))))))
     placeholder))
 
 (defun hget (obj path)
@@ -112,7 +112,8 @@
    table). Simplifies traversing responses from decoded JSON objects by about a
    trillion times."
   (multiple-value-bind (value leftover) (%hget-core obj path)
-    (if leftover
+    (format t "leftover: ~a~%" leftover)
+    (if (< (length leftover) 1)
         (if (numberp (car leftover))
             (error "NIL found instead of sequence")
             (error "NIL found instead of hash table"))
