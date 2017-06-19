@@ -176,6 +176,8 @@
 
 (setf (fdefinition 'hash-get) #'hget)
 (setf (fdefinition 'hash-get/extend) #'hget/extend)
+(setf (fdefinition '(setf hash-get)) (fdefinition '(setf hget)))
+(setf (fdefinition '(setf hash-get/extend)) (fdefinition '(setf hget/extend)))
 
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."
