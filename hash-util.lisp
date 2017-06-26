@@ -117,7 +117,7 @@
    trillion times."
   (multiple-value-bind (value leftover) (%hget-core obj path)
     (if *error-on-nil*
-        (if (< (length leftover) 1)
+        (if (> (length leftover) 1)
             (if (numberp (car leftover))
                 (error "NIL found instead of sequence")
                 (error "NIL found instead of hash table"))
