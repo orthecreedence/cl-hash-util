@@ -12,7 +12,12 @@
 
 (test hget
   (is (= 3 (hget ht '(a b))))
-  (is-false (hu:hash-get ht '(c d)))
+  (is-false (hash-get ht '(c d)))
+  (signals simple-error
+    (let ((*error-on-nil* t))
+      (hget ht '(c d))))
+  (is (= 3 (let ((*error-on-nil* t))
+             (hget ht '(a b)))))
   (signals type-error (setf (hget ht '(b c)) t))
   (is (= 4 (setf (hash-get ht '(a c)) 4)))
   (is (= 4 (hget ht '(a c)))))
