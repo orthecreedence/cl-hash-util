@@ -117,7 +117,7 @@
                    (values placeholder (last path)))) ;Total success!
              (return-from %find-lowest-store (values nil path)))))) ;Initial nil
 
-(defun hget (obj path)
+(defun hget (obj path &key fill-func)
   "Allows you to specify a path to get values out of a hash/list object. For
    instance, if you did:
 
@@ -136,6 +136,7 @@
    By setting *error-on-nil* to true, hget can be persuaded to throw an error if
    any of the upper part of the tree is missing . It will not throw an error if
    the final value is not set."
+  (declare (ignore fill-func))
   (multiple-value-bind (lstore leftover) (%find-lowest-store obj path)
     (let ((leftlen (length leftover)))
       (cond
