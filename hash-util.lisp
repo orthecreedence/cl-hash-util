@@ -57,9 +57,7 @@
            :plist->hash
            :hash->alist
            :hash->plist
-           :hget/extend
-           :hash-get
-           :hash-get/extend)
+           :hash-get)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
