@@ -57,9 +57,7 @@
            :plist->hash
            :hash->alist
            :hash->plist
-           :hget/extend
-           :hash-get
-           :hash-get/extend)
+           :hash-get)
   (:nicknames :hu))
 (in-package :cl-hash-util)
 
@@ -88,24 +86,38 @@
   "Extends hash-create syntax to make it nicer."
   `(hash-create (list ,@(loop for pair in pairs collect (list 'list (car pair) (cadr pair))))))
 
-(defun %hget-core (obj path)
-  (let ((placeholder obj))
-    (loop for entries on (if (listp path) path (list path))
-       do
-         (if (and entries placeholder
-                  (not (or (hash-table-p placeholder)
-                           (listp placeholder)
-                           (vectorp placeholder))))
-             (error "Can't descend into tree. Value is not null, but is not a hash table or sequence.")
-             (let ((current (if (numberp (car entries))
-                                (elt placeholder (car entries))
-                                (gethash (car entries) placeholder))))
-               (if current
-                   (setf placeholder current)
-                   (return-from %hget-core (values current entries))))))
-    placeholder))
+(defun %hget-access (obj key)
+  (if (hash-table-p obj)
+      (gethash key obj)
+      (handler-case
+          (values (elt obj key) t)
+        (t (e) (declare (ignore e)) (values nil nil)))))
 
-(defun hget (obj path)
+(defun %store-p (obj key)
+  "Is the object something from which key could be fetched?"
+  (or (hash-table-p obj)
+      (and (numberp key)
+           (or (listp obj)
+               (vectorp obj)))))
+
+(defun %find-lowest-store (obj path)
+  (let ((placeholder obj))
+    (loop for entries on path
+       do
+         (if placeholder
+             (if (cdr entries)
+                 (if (%store-p placeholder (car entries))
+                     (let ((next (%hget-access placeholder (car entries))))
+                       (unless next
+                         (return-from %find-lowest-store
+                           (values placeholder entries))) ;Partial
+                       (setf placeholder next)) ;Try some more
+                     (error "Can't descend into tree. Value is not null, but is not a hash table or sequence."))
+                 (return-from %find-lowest-store
+                   (values placeholder (last path)))) ;Total success!
+             (return-from %find-lowest-store (values nil path)))))) ;Initial nil
+
+(defun hget (obj path &key fill-func)
   "Allows you to specify a path to get values out of a hash/list object. For
    instance, if you did:
 
@@ -114,76 +126,63 @@
 
    which would return 4 (1st index of list stored under key 'lol of the hash
    table). Simplifies traversing responses from decoded JSON objects by about a
-   trillion times."
-  (multiple-value-bind (value leftover) (%hget-core obj path)
-    (if *error-on-nil*
-        (if (< (length leftover) 1)
-            (if (numberp (car leftover))
-                (error "NIL found instead of sequence")
-                (error "NIL found instead of hash table"))
-            value)
-        value)))
+   trillion times.
 
-(defun (setf hget) (val obj path)
+   The second and third values returned by hget indicate how much success it had
+   in looking up your request. If the second value is T, everything was found,
+   right up to the end node. When the second value is NIL, the third value is
+   the portion of the supplied path that was missing.
+
+   By setting *error-on-nil* to true, hget can be persuaded to throw an error if
+   any of the upper part of the tree is missing . It will not throw an error if
+   the final value is not set."
+  (declare (ignore fill-func))
+  (multiple-value-bind (lstore leftover) (%find-lowest-store obj path)
+    (let ((leftlen (length leftover)))
+      (cond
+        ((= 0 leftlen) (error "0 length path."))
+        ((= 1 leftlen)
+         (multiple-value-bind (val sig) (%hget-access lstore (car (last path)))
+           (if sig
+               (values val t)
+               (values nil nil leftover))))
+        (t
+         (if *error-on-nil*
+             (if (numberp (car leftover))
+                 (error "NIL found instead of sequence")
+                 (error "NIL found instead of hash table"))
+             (values nil nil leftover)))))))
+
+(defun %hget-set (store key value)
+  (if (hash-table-p store)
+      (setf (gethash key store) value)
+      (setf (elt store key) value)))
+
+(defun (setf hget) (val obj path &key fill-func)
   "Defines a setf for the hget function. Uses hget to get all but the
    last item in the path, then setfs that last object (either a gethash or an
-   elt)."
+   elt).
+
+   If any of the path aside from the last item is missing, it will throw an
+   error. To change this behavior, supply an object construction function with
+   the :fill-func parameter. (Setf hget) will fill out the tree up to the last
+   path item with the objects that this function returns."
   (let ((path (if (listp path) path (list path))))
-    (let ((last-obj (hget obj (butlast path)))
-          (final (car (last path))))
-      (if (numberp final)
-          (setf (elt last-obj final) val)
-          (setf (gethash final last-obj) val))
-      val)))
-
-(defun hget/extend (obj path)
-  "Like hget, but does not raise an error if the lower part of the tree is
-   missing. Instead, it returns nil as the first value and the unmatched
-   portion of the path as the second value.
-
-       (defvar *hash* (hash-create `((:a ,(hash-create `((:b ,(hash))))))))
-       (hget/extend *hash* '(:a :b :c :d :e))
-
-   will return the values NIL and (:C :D :E).
-
-   On its own, hget/extend doesn't extend anything, used with setf, it will
-   pad out a missing tree with new hash tables, placing the value in the
-   bottom-most hash table."
-  (multiple-value-bind (value leftover) (%hget-core obj path)
-    (if leftover
-        (values nil leftover)
-        value)))
-
-(defun (setf hget/extend) (val obj path
-                           &optional (new-hash-func #'make-hash-table))
-  "Setf for hget/extend. Obj is assumed to contain a tree of hash tables and
-   sequences that contains the branches in path. If any nodes are absent, they
-   will be padded out before setting the value in the bottom-most node. By
-   default the padding consists of calls to make-hash-table with no arguments.
-   An alternate hash table constructor function can be supplied with the
-   new-hash-func argument.
-
-   Hget/extend does not support the addition of sequences or arrays to the tree.
-   They must be added manually. Numerical indices in the extension portion of
-   the path will result in an error."
-  (unless (functionp new-hash-func)
-    (error "New-hash-func argument is a non-function"))
-  (let ((path (if (listp path) path (list path))))
-    (multiple-value-bind (value leftover) (%hget-core obj path)
-      (if leftover
-          (let ((current value))
-            (when (some #'numberp leftover)
-              (error "Number in hget/extend path list, but hget/extend won't create sequences"))
+    (multiple-value-bind (lstore leftover) (%find-lowest-store obj path)
+      (unless lstore
+        (error "Can't set: No fill-func and no hash-table or sequence found."))
+      (when (> (length leftover) 1)
+        (if fill-func
             (dolist (key (butlast leftover))
-              (setf (gethash key current) (funcall new-hash-func))
-              (setf current (gethash key current)))
-            (setf (gethash (car (last leftover)) current) val))
-          (setf (hget obj path) val)))))
+              (let ((stor (funcall fill-func)))
+                (%hget-set lstore key stor)
+                (setf lstore stor)))
+            (error
+             "Can't set: Missing storage objects in tree and no fill-func supplied.")))
+      (%hget-set lstore (car (last leftover)) val))))
 
 (setf (fdefinition 'hash-get) #'hget)
-(setf (fdefinition 'hash-get/extend) #'hget/extend)
 (setf (fdefinition '(setf hash-get)) (fdefinition '(setf hget)))
-(setf (fdefinition '(setf hash-get/extend)) (fdefinition '(setf hget/extend)))
 
 (defun hash-copy (hash &key (test #'equal))
   "Performs a shallow (non-recursive) copy of a hash table."

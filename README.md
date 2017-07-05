@@ -60,41 +60,6 @@ You can also do nested hashes:
 
 This saves a lot of typing =].
 
-Hash-get/extend
----------------
-
-Hash-get will throw an error if a portion of the hash tree is missing:
-
-```common-lisp
-(defvar *hash* (hash-create `((a ,(hash-create `((b ,(hash))))))))
-(hash-get *hash* '(a b c d e)) => The value NIL is not of type HASH-TABLE.
-```
-
-For alternate behavior, use Hash-get/extend:
-
-```common-lisp
-(hash-get/extend *hash* '(a b c d e))
-NIL
-(C D E)
-```
-
-Used in its setf form, hash-get/extend will pad out the missing nodes of the
-tree with hash tables, placing the setf value in the final table. By default
-the padding will consist of calls to make-hash-table without arguments. If you
-wish to use custom hash table configurations, supply a function that returns a
-hash table as the third argument to hash-get/extend:
-
-```common-lisp
-(setf (hash-get/extend *hash*
-                       '(a b f g h)
-                       (lambda () (make-hash-table :test 'equal)))
-      'value)
-```
-
-Hash-get/extend does not support the addition of sequences or arrays to the
-tree. They must be added manually. Numerical indices in the extension
-portion of the path will result in an error.
-
 With-keys
 ---------
 
