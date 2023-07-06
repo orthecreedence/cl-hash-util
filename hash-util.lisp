@@ -184,9 +184,13 @@
 (setf (fdefinition 'hash-get) #'hget)
 (setf (fdefinition '(setf hash-get)) (fdefinition '(setf hget)))
 
-(defun hash-copy (hash &key (test #'equal))
+(defun hash-copy (hash &key (test (hash-table-test hash))
+                            (size (hash-table-size hash))
+                            (rehash-size (hash-table-rehash-size hash))
+                            (rehash-threshold (hash-table-rehash-threshold hash)))
   "Performs a shallow (non-recursive) copy of a hash table."
-  (let ((new-hash (make-hash-table :test test :size (hash-table-count hash))))
+  (let ((new-hash (make-hash-table :test test :size size :rehash-size rehash-size
+                                   :rehash-threshold rehash-threshold)))
     (loop for k being the hash-keys of hash
           for v being the hash-values of hash do
             (setf (gethash k new-hash) v))
