@@ -161,3 +161,19 @@ plists: alist->plist, plist->alist, alist->hash, plist->hash, hash->alist, and h
 The alist->hash and plist->hash take the same :existing and :mode keywords that
 collecting-hash-table takes.
 
+Merging hash-tables
+-------------------
+
+The function `hash-merge` returns a merged hash-table.
+If a key occurs more than one time, the first key value is used
+and subsequent key values are discarded.
+For keeping the last value of a key, reverse the hash-table order.
+
+```common-lisp
+(hash-merge (hash-create (list (list "first" 1) (list "second" 2)))
+            (hash-create (list (list "first" 234234) (list "third" 235346))))
+;; Contents:
+;; "first" 1
+;; "second" 2
+;; "third" 235346
+```

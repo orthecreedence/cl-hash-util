@@ -43,6 +43,7 @@
   (:use :cl :cl-user)
   (:export :*error-on-nil*
            :hash-create
+	   :hash-merge
            :hash
            :hget
            :hash-copy
@@ -199,3 +200,31 @@
 (defun hash-keys (hash)
   "Grab all the hash keys of the passed hash into a list."
   (loop for x being the hash-keys of hash collect x))
+
+(defun hash-merge (&rest maps)
+  "Returns a merged hash-table.
+If a key occurs more than one time, the first key value is used
+and subsequent key values are discarded.
+For keeping the last value of a key, reverse the hash-table order."
+  (let* ((hash-table-tests
+	   (mapcar #'hash-table-test maps))
+	 (hash-table-test
+	   (cond ((member 'equalp hash-table-tests)
+		  'equalp)
+		 ((member 'equal hash-table-tests)
+		  'equal)
+		 ((member 'eql hash-table-tests)
+		  'eql)
+		 ((member 'eq hash-table-tests)
+		  'eq)))
+	 (hash-table-size
+	   (ceiling (* 1.5 (length (remove-duplicates (mapcan #'hash-keys maps)
+						      :test hash-table-test)))))
+	 (new-hash-table
+	   (make-hash-table :test hash-table-test :size hash-table-size)))
+    (mapc (lambda (hash)
+	    (loop for key being the hash-keys of hash
+		  do (unless (gethash key new-hash-table)
+		       (setf (gethash key new-hash-table) (gethash key hash)))))
+	  maps)
+    new-hash-table))

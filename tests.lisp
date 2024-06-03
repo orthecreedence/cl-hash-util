@@ -31,3 +31,16 @@
   (is (equal '(b c d) (nth-value 2 (hget ht '(b c d)))))
   (is (= 5 (setf (hget ht '(b c d) :fill-func #'make-hash-table) 5)))
   (is (= 5 (hget ht '(b c d)))))
+
+(test hash-merge
+  (let* ((hash-table-1
+	  (hash-create (list (list "first" 1) (list "second" 2))))
+	(hash-table-2
+	  (hash-create (list (list "first" 234234) (list "third" 235346))))
+	 (merged-hash-table
+	   (hash-merge hash-table-1 hash-table-2))
+	 (reverse-merged-hash-table
+	   (hash-merge hash-table-2 hash-table-1)))
+    (is (= 3 (hash-table-count merged-hash-table)))
+    (is (= 1 (gethash "first" merged-hash-table)))
+    (is (= 234234 (gethash "first" reverse-merged-hash-table)))))
