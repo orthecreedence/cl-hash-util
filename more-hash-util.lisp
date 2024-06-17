@@ -15,11 +15,11 @@
   "With-keys is the hash table equivalent of with-slots.
 
 (with-keys
-   (\"name\" (loc \"location\"))
+   (\"name\" (loc \"location\") (time \"time\" 2024))
     (hash (\"name\" \"andrew\") (\"location\" \"santa cruz\"))
   (setf loc (string-upcase loc))
-  (format nil \"Hi, ~a in ~a!\" name loc))
-\"Hi, andrew in SANTA CRUZ!\"
+  (format nil \"Hi, ~a in ~a around ~a!\" name loc time))
+\"Hi, andrew in SANTA CRUZ around 2024!\"
 
 The first parameter is a list of keys that with-keys will reference in the hash
 table provided in the second parameter. With-keys will attempt to convert each
@@ -27,7 +27,10 @@ key into a symbol, binding the hash table value to it during body execution.
 String keys are upcased before conversion to symbols.
 
 If you don't want with-keys to guess at a symbol for a key, supply a list -
-(<symbol> <key>) - in place of the key, as in (loc \"location\") above."
+(<symbol> <key>) - in place of the key, as in (loc \"location\") above.
+
+If you want to supply a default value, you have to supply a list -
+(<symbol> <key> <default>) - in place of the key, as in (time \"time\" 2024)."
   (let ((htsym (gensym)))
     `(let ((,htsym ,hash-table))
        (symbol-macrolet
@@ -38,11 +41,14 @@ If you don't want with-keys to guess at a symbol for a key, supply a list -
                               (symbolize entry)))
                      (key (if (listp entry)
                               (second entry)
-                              entry)))
+                              entry))
+		     (default (when (listp entry)
+				(third entry))))
                  `(,sym (gethash ,(if (and (symbolp key) (not (keywordp key)))
                                       (quote key)
                                       key)
-                                 ,htsym))))
+                                 ,htsym
+				 ,default))))
              keys)
          ,@body))))
 

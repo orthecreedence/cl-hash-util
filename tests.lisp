@@ -43,3 +43,38 @@
     (is (= 3 (hash-table-count merged-hash-table)))
     (is (= 1 (gethash "first" merged-hash-table)))
     (is (= 234234 (gethash "first" reverse-merged-hash-table)))))
+
+(test with-keys
+  (let ((hash-table-1 (hash-create (list (list "first" 1) (list "second" 2))))
+	(hash-table-2 (hash-create (list (list "First" 1) (list "second" 2))))
+	(hash-table-3 (hash-create (list (list 1 1) (list 2 2)))))
+    (is (= 1
+	   (with-keys ("first")
+	       hash-table-1
+	     first))
+	"base case")
+    (is (null
+	 (with-keys ("First")
+	     hash-table-1
+	   first))
+	"case sensitive")
+    (is (= 1
+	   (with-keys ("First")
+	       hash-table-2
+	     first))
+	"case sensitive")
+    (is (= 1
+	   (with-keys ((number-one "first"))
+	       hash-table-1
+	     number-one))
+	"supply symbol name")
+    (is (= 1
+	   (with-keys ((one 1))
+	       hash-table-3
+	     one))
+	"works with numbers when given a symbol")
+    (is (= 12345
+	   (with-keys ((number-three "three" 12345))
+	       hash-table-1
+	     number-three))
+	"default value")))
